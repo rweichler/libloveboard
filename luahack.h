@@ -39,7 +39,7 @@ void (*SDL_SetMainReady)();
 void (*SDL_iPhoneSetEventPump)(int);
 
 #define SET(x) x = dlsym(lib, #x)
-void open_lib()
+void load_liblove()
 {
     void *lib = dlopen("/var/root/FUCK.dylib", RTLD_NOW);
     SET(lua_getfield);
