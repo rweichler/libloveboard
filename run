@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+killall SpringBoard && tail -f /var/log/syslog | grep LoveBoard
