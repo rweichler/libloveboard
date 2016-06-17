@@ -1,0 +1,8 @@
+go to
+
+/Users/reed/Library/Developer/Xcode/DerivedData/liblove-hbvsuxqmrvarotfciounuuuswdcz/Build/Intermediates/liblove.build/Debug-iphoneos/liblove-ios.build/Objects-normal/arm64
+
+
+type this command
+
+clang++ -arch arm64 -isysroot `xcrun --sdk iphoneos --show-sdk-path` -dynamiclib *.o -o FUCK.dylib ~/Downloads/love_ios/love-0.10.1-ios-source/platform/xcode/ios/libraries/*/*.a -framework Foundation -framework CoreMotion -framework GameController -framework CoreGraphics -framework QuartzCore -framework AudioToolbox -framework UIKit -framework OpenGLES -framework OpenAL -lz
