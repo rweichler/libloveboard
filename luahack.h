@@ -35,13 +35,13 @@ float (*lua_tonumber)(lua_State *, int);
 void (*lua_close)(lua_State *);
 
 
-void (*SDL_SetMainReady)();
-void (*SDL_iPhoneSetEventPump)(int);
+void (*love_SDL_SetMainReady)();
+void (*love_SDL_iPhoneSetEventPump)(BOOL);
 
 #define SET(x) x = dlsym(lib, #x)
 void load_liblove()
 {
-    void *lib = dlopen("/var/root/FUCK.dylib", RTLD_NOW);
+    void *lib = dlopen("/var/root/FUCK/FUCK.dylib", RTLD_NOW);
     SET(lua_getfield);
     SET(lua_setfield);
     SET(lua_getfield);
@@ -60,6 +60,6 @@ void load_liblove()
     SET(lua_tonumber);
     SET(lua_close);
 
-    SET(SDL_SetMainReady);
-    SET(SDL_iPhoneSetEventPump);
+    SET(love_SDL_SetMainReady);
+    SET(love_SDL_iPhoneSetEventPump);
 }

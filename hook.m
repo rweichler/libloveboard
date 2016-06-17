@@ -99,37 +99,48 @@ int hook_main(int argc, char *argv[], void *lol, void *wut)
     return orig_main(argc, argv, lol, wut);
 }
 
+SEL postFinishLaunch_sel;// = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
+id postFinishLaunch(id self, SEL _cmd)
+{
+    if(love_SDL_iPhoneSetEventPump != NULL) {
+        love_SDL_iPhoneSetEventPump(1);
+    } else {
+        Log(@"set event pump is NULL");
+    }
+
+    int err = runlove(forward_argc, forward_argv);
+
+    Log(@"runlove: %d", err);
+
+
+    if(love_SDL_iPhoneSetEventPump != NULL) {
+        love_SDL_iPhoneSetEventPump(0);
+    } else {
+        Log(@"set event pump is NULL");
+    }
+    return self;
+}
+
 BOOL (*orig_app_finished_launching)(id self, SEL _cmd, id app);
 BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 {
     BOOL result = orig_app_finished_launching(self, _cmd, app);
+    load_liblove();
 
-    if(SDL_SetMainReady != NULL) {
-        SDL_SetMainReady();
+    if(love_SDL_SetMainReady != NULL) {
+        love_SDL_SetMainReady();
     } else {
         Log(@"set main ready is NULL");
     }
-
-    if(SDL_iPhoneSetEventPump != NULL) {
-        SDL_iPhoneSetEventPump(1);
-    } else {
-        Log(@"set event pump is NULL");
-    }
-
-    load_liblove();
-    runlove(forward_argc, forward_argv);
-
-
-    if(SDL_iPhoneSetEventPump != NULL) {
-        SDL_iPhoneSetEventPump(0);
-    } else {
-        Log(@"set event pump is NULL");
-    }
+    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0];
 
     return result;
 }
 
 MSInitialize {
+    postFinishLaunch_sel = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
+    Class SpringBoard = NSClassFromString(@"SpringBoard");
+    class_addMethod(SpringBoard, postFinishLaunch_sel, (IMP)postFinishLaunch, "@:@");
     MSHookFunction(dlsym(RTLD_DEFAULT, "UIApplicationMain"), hook_main, (void **)&orig_main);
-    MSHookMessageEx(NSClassFromString(@"SpringBoard"), @selector(applicationDidFinishLaunching:), (IMP)&hook_app_finished_launching, (IMP *)&orig_app_finished_launching);
+    MSHookMessageEx(SpringBoard, @selector(applicationDidFinishLaunching:), (IMP)&hook_app_finished_launching, (IMP *)&orig_app_finished_launching);
 }
