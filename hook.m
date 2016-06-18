@@ -2,6 +2,7 @@
 #include <Foundation/Foundation.h>
 #include <dlfcn.h>
 #include "luahack.h"
+#include <CoreGraphics/CoreGraphics.h>
 
 #define Log(format, ...) NSLog(@"LoveBoard: %@", [NSString stringWithFormat: format, ## __VA_ARGS__])
 
@@ -99,6 +100,8 @@ int hook_main(int argc, char *argv[], void *lol, void *wut)
     return orig_main(argc, argv, lol, wut);
 }
 
+id _the_window = nil;
+
 SEL postFinishLaunch_sel;// = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
 id postFinishLaunch(id self, SEL _cmd)
 {
@@ -118,6 +121,7 @@ id postFinishLaunch(id self, SEL _cmd)
     } else {
         Log(@"set event pump is NULL");
     }
+
     return self;
 }
 
@@ -125,7 +129,6 @@ BOOL (*orig_app_finished_launching)(id self, SEL _cmd, id app);
 BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 {
     BOOL result = orig_app_finished_launching(self, _cmd, app);
-    load_liblove();
 
     if(love_SDL_SetMainReady != NULL) {
         love_SDL_SetMainReady();
@@ -137,10 +140,38 @@ BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
     return result;
 }
 
+id post_init(id self, SEL _cmd)
+{
+    [self setWindowLevel:999999];
+    [self setUserInteractionEnabled:false];
+    [self setAlpha:0.5];
+    return self;
+}
+
+id (*orig_init)(id self, SEL _cmd, CGRect frame);
+id hook_init(id self, SEL _cmd, CGRect frame)
+{
+    self = orig_init(self, _cmd, frame);
+    _the_window = self;
+    [self _setSecure:true];
+    [self setWindowLevel:999999];
+    //[self setUserInteractionEnabled:false];
+    //[self setAlpha:0.5];
+    Log(@"initting");
+    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:1.0];
+    return self;
+}
+
 MSInitialize {
+    load_liblove();
     postFinishLaunch_sel = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
-    Class SpringBoard = NSClassFromString(@"SpringBoard");
+    Class SpringBoard = objc_getClass("SpringBoard");
     class_addMethod(SpringBoard, postFinishLaunch_sel, (IMP)postFinishLaunch, "@:@");
     MSHookFunction(dlsym(RTLD_DEFAULT, "UIApplicationMain"), hook_main, (void **)&orig_main);
     MSHookMessageEx(SpringBoard, @selector(applicationDidFinishLaunching:), (IMP)&hook_app_finished_launching, (IMP *)&orig_app_finished_launching);
+
+    Class Window = objc_getClass("SDL_uikitwindow");
+    Log(@"window: %@", Window);
+    class_addMethod(Window, postFinishLaunch_sel, (IMP)post_init, "@:@");
+    MSHookMessageEx(Window, @selector(initWithFrame:), (IMP)&hook_init, (IMP *)&orig_init);
 }
