@@ -97,7 +97,7 @@ int hook_main(int argc, char *argv[], void *lol, void *wut)
     int inserted_game = 0;
     for (i = 0; i < forward_argc; i++) {
         if(i == 1 && !inserted_game) {
-            forward_argv[i] = "/var/root/LOVE_GAME";
+            forward_argv[i] = "/var/mobile/LOVE_GAME";
             inserted_game = 1;
             continue;
         }

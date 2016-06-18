@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-mv hook_main.dylib /Library/MobileSubstrate/DynamicLibraries/LoveBoard.dylib

@@ -1,0 +1,9 @@
+Package: loveboard
+Name: LoveBoard
+Version: 0.1~alpha1
+Architecture: iphoneos-arm
+Depends: firmware (>= 8.0), mobilesubstrate (>= 0.9.6011)
+Description: I LÖVE SpringBoard.
+Maintainer: Reed Weichler <rweichler+cydia+loveboard@gmail.com>
+Author: Reed Weichler (rweichler) <rweichler+cydia+loveboard@gmail.com>
+Section: Tweaks

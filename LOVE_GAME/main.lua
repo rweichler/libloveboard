@@ -30,7 +30,7 @@ function love.draw()
     love.graphics.setColor(255, 255, 255, 255)
     local txt
     if not opened_cydia then
-        txt = "So yeah this example sucks.\n\nTap to open Cydia and\nuninstall this garbage"
+        txt = "So yeah this example sucks.\n\nTap to open Cydia and\nuninstall this garbage\n\nGame is stored in\n/var/mobile/LOVE_GAME"
     else
         txt = "OPENING CYDIA"
     end
