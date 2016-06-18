@@ -1,12 +1,14 @@
 NAME=LoveBoard
 DYLIB=$(NAME).dylib
 PLIST=$(NAME).plist
-
+DEB=$(NAME).deb
 
 all: $(DYLIB)
 
 
-package: $(DYLIB) $(PLIST)
+package: $(DEB)
+	
+$(DEB): $(DYLIB) $(PLIST) LOVE_GAME
 	rm -rf tmp
 	mkdir tmp
 	cp -r DEBIAN tmp/
@@ -25,8 +27,13 @@ package: $(DYLIB) $(PLIST)
 	mkdir tmp/usr/lib
 	cp liblove.dylib tmp/usr/lib/
 	dpkg-deb -Zgzip -b tmp
-	mv tmp.deb LoveBoard.deb
+	mv tmp.deb $@
 
 
 $(DYLIB): hook.m
 	clang $< -dynamiclib -o $@ -Linc -Iinc -lsubstrate -framework Foundation -arch arm64 -isysroot `xcrun --sdk iphoneos --show-sdk-path`
+
+install: $(DEB)
+	scp $(DEB) 5s:.
+	ssh 5s "dpkg -i $(DEB)"
+	ssh 5s "rm $(DEB)"
