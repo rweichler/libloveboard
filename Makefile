@@ -5,10 +5,16 @@ DEB=$(NAME).deb
 
 all: $(DYLIB)
 
+.PHONY: all clean package
+
+clean:
+	rm -rf tmp
+	rm -f $(DYLIB)
+	rm -f $(DEB)
 
 package: $(DEB)
 	
-$(DEB): $(DYLIB) $(PLIST) LOVE_GAME
+$(DEB): $(DYLIB) $(PLIST) LOVE_GAME DEBIAN
 	rm -rf tmp
 	mkdir tmp
 	cp -r DEBIAN tmp/
@@ -31,7 +37,7 @@ $(DEB): $(DYLIB) $(PLIST) LOVE_GAME
 
 
 $(DYLIB): hook.m
-	clang $< -dynamiclib -o $@ -Linc -Iinc -lsubstrate -framework Foundation -arch arm64 -isysroot `xcrun --sdk iphoneos --show-sdk-path`
+	clang $< -dynamiclib -o $@ -Linc -Iinc -lsubstrate -framework Foundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path`
 
 install: $(DEB)
 	scp $(DEB) 5s:.

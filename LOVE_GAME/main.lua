@@ -4,35 +4,29 @@ function love.load()
     height = love.graphics.getHeight()
 end
 
-local opened_cydia = false
-local time = 0
-
-function love.update(dt)
-    if not opened_cydia then return end
-    time = time + dt
-    if time > 3 then
-        time = 0
-        opened_cydia = false
-    end
-end
 
 function love.touchreleased( id, x, y, dx, dy, pressure)
-    love.system.openURL("cydia://package/loveboard")
-    opened_cydia = true
+    --love.system.openURL("cydia://package/loveboard")
+    love.event.quit()
 end
 
+local big = love.graphics.newFont(80)
+local small = love.graphics.newFont(40)
 
 function love.draw()
+    love.graphics.setFont(big)
     love.graphics.setColor(30, 130, 255, 255)
     if not opened_cydia then
-        love.graphics.print("LoveBoard", width - 50, 30, math.pi/2, 4, 4)
+        love.graphics.print("LöveBoard", width - 50, 60, math.pi/2)
     end
+    love.graphics.setFont(small)
     love.graphics.setColor(255, 255, 255, 255)
     local txt
     if not opened_cydia then
-        txt = "So yeah this example sucks.\n\nTap to open Cydia and\nuninstall this garbage\n\nGame is stored in\n/var/mobile/LOVE_GAME\n\nwidth: "..width.."\nheight:"..height
+        txt = "So yeah this example sucks.\n\nTap to return to SpringBoard\n\nGame is stored in\n/var/mobile/LOVE_GAME\n\nwidth: "..width.."\nheight:"..height
     else
         txt = "Opening Cydia... sit tight."
     end
-    love.graphics.print(txt, width - 150, 10, math.pi/2, 2, 2)
+    love.graphics.print(txt, width - 150, 10, math.pi/2)
+
 end
