@@ -19,6 +19,10 @@ static int love_preload(lua_State *L, lua_CFunction f, const char *name)
 //pretty much copied from love.cpp
 static int runlove(int argc, char **argv)
 {
+    Log(@"%d", argc);
+    for(char **arg = argv; *arg != NULL; arg++) {
+        Log(@"%s", *arg);
+    }
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
@@ -88,11 +92,17 @@ int hook_main(int argc, char *argv[], void *lol, void *wut)
     int i;
 
     /* store arguments */
-    forward_argc = argc;
-    forward_argv = (char **)malloc((argc+1) * sizeof(char *));
-    for (i = 0; i < argc; i++) {
-        forward_argv[i] = malloc( (strlen(argv[i])+1) * sizeof(char));
-        strcpy(forward_argv[i], argv[i]);
+    forward_argc = argc + 1;
+    forward_argv = (char **)malloc((argc+2) * sizeof(char *));
+    int inserted_game = 0;
+    for (i = 0; i < forward_argc; i++) {
+        if(i == 1 && !inserted_game) {
+            forward_argv[i] = "/var/root/LOVE_GAME";
+            inserted_game = 1;
+            continue;
+        }
+        forward_argv[i - inserted_game] = malloc( (strlen(argv[i])+1) * sizeof(char));
+        strcpy(forward_argv[i - inserted_game], argv[i]);
     }
     forward_argv[i] = NULL;
 
@@ -142,9 +152,8 @@ BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 
 id post_init(id self, SEL _cmd)
 {
-    [self setWindowLevel:999999];
     [self setUserInteractionEnabled:false];
-    [self setAlpha:0.5];
+    [self setAlpha:0.7];
     return self;
 }
 
@@ -154,11 +163,7 @@ id hook_init(id self, SEL _cmd, CGRect frame)
     self = orig_init(self, _cmd, frame);
     _the_window = self;
     [self _setSecure:true];
-    [self setWindowLevel:999999];
-    //[self setUserInteractionEnabled:false];
-    //[self setAlpha:0.5];
-    Log(@"initting");
-    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:1.0];
+    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0];
     return self;
 }
 
