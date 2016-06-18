@@ -1,11 +1,12 @@
+#define Log(format, ...) NSLog(@"LoveBoard: %@", [NSString stringWithFormat: format, ## __VA_ARGS__])
 #include <substrate.h>
 #include <Foundation/Foundation.h>
 #include <dlfcn.h>
 #include "luahack.h"
 #include <CoreGraphics/CoreGraphics.h>
 
-#define Log(format, ...) NSLog(@"LoveBoard: %@", [NSString stringWithFormat: format, ## __VA_ARGS__])
 
+// pilfered from love.cpp
 static int love_preload(lua_State *L, lua_CFunction f, const char *name)
 {
     lua_getglobal(L, "package");
@@ -16,9 +17,14 @@ static int love_preload(lua_State *L, lua_CFunction f, const char *name)
     return 0;
 }
 
-//pretty much copied from love.cpp
+// pilfered from love.cpp
 static int runlove(int argc, char **argv)
 {
+    if(luaopen_love == NULL) {
+        Log(@"luaopen_love is NULL");
+    } else {
+        Log(@"ok so dlopen fucking works");
+    }
     Log(@"%d", argc);
     for(char **arg = argv; *arg != NULL; arg++) {
         Log(@"%s", *arg);
@@ -89,6 +95,8 @@ static char **forward_argv;
 int (*orig_main)(int argc, char *argv[], void *, void *);
 int hook_main(int argc, char *argv[], void *lol, void *wut)
 {
+    // inspiration for this code: 
+    // https://github.com/spurious/SDL-mirror/blob/master/src/video/uikit/SDL_uikitappdelegate.m
     int i;
 
     /* store arguments */
@@ -115,13 +123,16 @@ id _the_window = nil;
 SEL postFinishLaunch_sel;// = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
 id postFinishLaunch(id self, SEL _cmd)
 {
+    // inspiration for this code: 
+    // https://github.com/spurious/SDL-mirror/blob/master/src/video/uikit/SDL_uikitappdelegate.m
+
     if(love_SDL_iPhoneSetEventPump != NULL) {
         love_SDL_iPhoneSetEventPump(1);
     } else {
         Log(@"set event pump is NULL");
     }
 
-    int err = runlove(forward_argc, forward_argv);
+    int err = runlove(forward_argc, forward_argv); // AKA SDL_main
 
     Log(@"runlove: %d", err);
 
@@ -129,7 +140,7 @@ id postFinishLaunch(id self, SEL _cmd)
     if(love_SDL_iPhoneSetEventPump != NULL) {
         love_SDL_iPhoneSetEventPump(0);
     } else {
-        Log(@"set event pump is NULL");
+        Log(@"set event pump is NULL again");
     }
 
     return self;
@@ -140,6 +151,8 @@ BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 {
     BOOL result = orig_app_finished_launching(self, _cmd, app);
 
+    // inspiration for this code: 
+    // https://github.com/spurious/SDL-mirror/blob/master/src/video/uikit/SDL_uikitappdelegate.m
     if(love_SDL_SetMainReady != NULL) {
         love_SDL_SetMainReady();
     } else {
@@ -162,8 +175,12 @@ id hook_init(id self, SEL _cmd, CGRect frame)
 {
     self = orig_init(self, _cmd, frame);
     _the_window = self;
+    // allows the window to overlay on top of the lockscreen
+    // also, for some reason if you dont do this then
+    // the lockscreen wont take user input D:
     [self _setSecure:true];
-    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0];
+    // im not even sure if this is effective at all.
+    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0]; //calls post_init
     return self;
 }
 

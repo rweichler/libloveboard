@@ -38,10 +38,19 @@ void (*lua_close)(lua_State *);
 void (*love_SDL_SetMainReady)();
 void (*love_SDL_iPhoneSetEventPump)(BOOL);
 
+
+// ok. im doing it this really sketch way because i suck at compiling shit.
+// i couldnt link it properly for some reason so im just doing it the shitty way
+// of dlopening it and looking up all of the functions. sue me
 #define SET(x) x = dlsym(lib, #x)
 void load_liblove()
 {
     void *lib = dlopen("/usr/lib/liblove.dylib", RTLD_NOW);
+    if(lib == NULL) {
+        Log(@"the lib is fucking NULL");
+    } else {
+        Log(@"the lib is chill");
+    }
     SET(lua_getfield);
     SET(lua_setfield);
     SET(lua_getfield);

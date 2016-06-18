@@ -32,14 +32,20 @@ $(DEB): $(DYLIB) $(PLIST) LOVE_GAME DEBIAN
 	mkdir tmp/usr
 	mkdir tmp/usr/lib
 	cp liblove.dylib tmp/usr/lib/
+	# relove command
+	mkdir tmp/usr/bin
+	cp relove tmp/usr/bin/
+	# pack it up
 	dpkg-deb -Zgzip -b tmp
 	mv tmp.deb $@
 
 
-$(DYLIB): hook.m
+$(DYLIB): hook.m luahack.h
 	clang $< -dynamiclib -o $@ -Linc -Iinc -lsubstrate -framework Foundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path`
 
+SSH_FLAGS=-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
+
 install: $(DEB)
-	scp $(DEB) 5s:.
-	ssh 5s "dpkg -i $(DEB)"
-	ssh 5s "rm $(DEB)"
+	scp $(SSH_FLAGS) $(DEB) 5s:.
+	ssh $(SSH_FLAGS) 5s "dpkg -i $(DEB)"
+	ssh $(SSH_FLAGS) 5s "rm $(DEB)"

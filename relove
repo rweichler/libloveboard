@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+echo '@encode(id (id, id))(dlsym(RTLD_DEFAULT, "postFinishLaunch"))(nil, nil)' | cycript -p SpringBoard &

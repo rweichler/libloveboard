@@ -1,8 +1,8 @@
-Package: loveboard
+package: loveboard
 Name: LoveBoard
 Version: 0.1~alpha2
 Architecture: iphoneos-arm
-Depends: mobilesubstrate
+Depends: mobilesubstrate, cycript
 Depiction: http://cydia.r333d.com/view/loveboard
 Description: I LÖVE SpringBoard.
 Maintainer: r333d <rweichler+cydia+loveboard@gmail.com>
