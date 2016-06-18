@@ -152,8 +152,8 @@ BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 
 id post_init(id self, SEL _cmd)
 {
-    [self setUserInteractionEnabled:false];
-    [self setAlpha:0.7];
+    //[self setUserInteractionEnabled:false];
+    //[self setAlpha:0.7];
     return self;
 }
 
