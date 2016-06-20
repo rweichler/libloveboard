@@ -5,7 +5,6 @@
 #include "luahack.h"
 #include <CoreGraphics/CoreGraphics.h>
 
-
 // pilfered from love.cpp
 static int love_preload(lua_State *L, lua_CFunction f, const char *name)
 {
@@ -101,8 +100,8 @@ int hook_main(int argc, char *argv[], void *lol, void *wut)
 
     /* store arguments */
     forward_argc = argc + 1;
-    forward_argv = (char **)malloc((argc+2) * sizeof(char *));
     int inserted_game = 0;
+    forward_argv = (char **)malloc((forward_argc + 1) * sizeof(char *));
     for (i = 0; i < forward_argc; i++) {
         if(i == 1 && !inserted_game) {
             forward_argv[i] = "/var/mobile/LOVE_GAME";
@@ -178,13 +177,16 @@ id hook_init(id self, SEL _cmd, CGRect frame)
     // allows the window to overlay on top of the lockscreen
     // also, for some reason if you dont do this then
     // the lockscreen wont take user input D:
-    [self _setSecure:true];
+    if([self respondsToSelector:@selector(_setSecure:)]) {
+        [self _setSecure:true];
+    }
     // im not even sure if this is effective at all.
     [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0]; //calls post_init
     return self;
 }
 
-MSInitialize {
+MSInitialize
+{
     load_liblove();
     postFinishLaunch_sel = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
     Class SpringBoard = objc_getClass("SpringBoard");
