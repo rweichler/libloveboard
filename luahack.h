@@ -31,9 +31,13 @@ void (*lua_call)(lua_State *, int, int);
 void (*lua_pushboolean)(lua_State *, int);
 int (*lua_isnumber)(lua_State *, int);
 float (*lua_tonumber)(lua_State *, int);
+int (*luaL_loadfile) (lua_State *, const char *);
+int (*lua_pcall) (lua_State *, int, int, int);
 
+#define LUA_MULTRET     (-1)
 void (*lua_close)(lua_State *);
-
+#define luaL_dofile(L, fn) \
+        (luaL_loadfile(L, fn) || lua_pcall(L, 0, LUA_MULTRET, 0))
 
 void (*love_SDL_SetMainReady)();
 void (*love_SDL_iPhoneSetEventPump)(BOOL);
@@ -45,7 +49,7 @@ void (*love_SDL_iPhoneSetEventPump)(BOOL);
 #define SET(x) x = dlsym(lib, #x)
 void load_liblove()
 {
-    void *lib = dlopen("/usr/lib/liblove.dylib", RTLD_NOW);
+    void *lib = dlopen("/usr/lib/libloveboard.dylib", RTLD_NOW);
     if(lib == NULL) {
         Log(@"the lib is fucking NULL");
     } else {
@@ -68,6 +72,8 @@ void load_liblove()
     SET(lua_isnumber);
     SET(lua_tonumber);
     SET(lua_close);
+    SET(luaL_loadfile);
+    SET(lua_pcall);
 
     SET(love_SDL_SetMainReady);
     SET(love_SDL_iPhoneSetEventPump);

@@ -17,6 +17,7 @@ end
 
 local big = love.graphics.newFont(80)
 local small = love.graphics.newFont(40)
+local tiny = love.graphics.newFont(20)
 
 function love.draw()
     love.graphics.setFont(big)

@@ -32,7 +32,7 @@ $(DEB): $(DYLIB) $(PLIST) LOVE_GAME DEBIAN
 	# liblove
 	@mkdir tmp/usr
 	@mkdir tmp/usr/lib
-	@cp liblove.dylib tmp/usr/lib/
+	@cp libloveboard.dylib tmp/usr/lib/
 	# relove command
 	@mkdir tmp/usr/bin
 	@cp relove tmp/usr/bin/
