@@ -47,7 +47,7 @@ void (*love_SDL_iPhoneSetEventPump)(BOOL);
 // i couldnt link it properly for some reason so im just doing it the shitty way
 // of dlopening it and looking up all of the functions. sue me
 #define SET(x) x = dlsym(lib, #x)
-void load_liblove()
+static void load_liblove()
 {
     void *lib = dlopen("/usr/lib/libloveboard.dylib", RTLD_NOW);
     if(lib == NULL) {

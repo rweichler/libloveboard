@@ -95,8 +95,8 @@ static int runlove(int argc, char **argv)
 
 static int forward_argc;
 static char **forward_argv;
-int (*orig_main)(int argc, char *argv[], void *, void *);
-int hook_main(int argc, char *argv[], void *lol, void *wut)
+static int (*orig_main)(int argc, char *argv[], void *, void *);
+static int hook_main(int argc, char *argv[], void *lol, void *wut)
 {
     // inspiration for this code: 
     // https://github.com/spurious/SDL-mirror/blob/master/src/video/uikit/SDL_uikitappdelegate.m
@@ -121,10 +121,7 @@ int hook_main(int argc, char *argv[], void *lol, void *wut)
     return orig_main(argc, argv, lol, wut);
 }
 
-id _the_window = nil;
-
-SEL postFinishLaunch_sel;// = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
-id postFinishLaunch(id self, SEL _cmd)
+void loveboard_run()
 {
     // inspiration for this code: 
     // https://github.com/spurious/SDL-mirror/blob/master/src/video/uikit/SDL_uikitappdelegate.m
@@ -145,12 +142,17 @@ id postFinishLaunch(id self, SEL _cmd)
     } else {
         Log(@"set event pump is NULL again");
     }
+}
 
+static SEL postFinishLaunch_sel;// = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
+static id postFinishLaunch(id self, SEL _cmd)
+{
+    loveboard_run();
     return self;
 }
 
-BOOL (*orig_app_finished_launching)(id self, SEL _cmd, id app);
-BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
+static BOOL (*orig_app_finished_launching)(id self, SEL _cmd, id app);
+static BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 {
     BOOL result = orig_app_finished_launching(self, _cmd, app);
 
@@ -166,18 +168,17 @@ BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
     return result;
 }
 
-id post_init(id self, SEL _cmd)
+static id post_init(id self, SEL _cmd)
 {
     //[self setUserInteractionEnabled:false];
     //[self setAlpha:0.7];
     return self;
 }
 
-id (*orig_init)(id self, SEL _cmd, CGRect frame);
-id hook_init(id self, SEL _cmd, CGRect frame)
+static id (*orig_init)(id self, SEL _cmd, CGRect frame);
+static id hook_init(id self, SEL _cmd, CGRect frame)
 {
     self = orig_init(self, _cmd, frame);
-    _the_window = self;
     // allows the window to overlay on top of the lockscreen
     // also, for some reason if you dont do this then
     // the lockscreen wont take user input D:
