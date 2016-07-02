@@ -33,6 +33,10 @@ int (*lua_isnumber)(lua_State *, int);
 float (*lua_tonumber)(lua_State *, int);
 int (*luaL_loadfile) (lua_State *, const char *);
 int (*lua_pcall) (lua_State *, int, int, int);
+int (*luaL_loadstring) (lua_State *, const char *);
+
+#define luaL_dostring(L, s) \
+        (luaL_loadstring(L, s) || lua_pcall(L, 0, LUA_MULTRET, 0))
 
 #define LUA_MULTRET     (-1)
 void (*lua_close)(lua_State *);
@@ -74,6 +78,7 @@ static void load_liblove()
     SET(lua_close);
     SET(luaL_loadfile);
     SET(lua_pcall);
+    SET(luaL_loadstring);
 
     SET(love_SDL_SetMainReady);
     SET(love_SDL_iPhoneSetEventPump);

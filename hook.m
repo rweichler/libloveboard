@@ -18,6 +18,7 @@ static int love_preload(lua_State *L, lua_CFunction f, const char *name)
     return 0;
 }
 
+
 // pilfered from love.cpp
 static int runlove(int argc, char **argv)
 {
@@ -33,7 +34,7 @@ static int runlove(int argc, char **argv)
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
-    luaL_dofile(L, GAME_PATH "/preload.lua");
+    luaL_dostring(L, "package.path = '"GAME_PATH"/?.lua;'..package.path");
 
     // Add love to package.preload for easy requiring.
     love_preload(L, luaopen_love, "love");
@@ -144,11 +145,33 @@ void loveboard_run()
     }
 }
 
+
 static SEL postFinishLaunch_sel;// = @selector(sdoifjaoiimahugefaggotsjfoiadsjf);
+static const float DELAY = 0.5;
+static const unsigned int MAX_TRIES = 10;
+static unsigned int _num_tries = 0;
 static id postFinishLaunch(id self, SEL _cmd)
 {
-    loveboard_run();
+    _num_tries++;
+    Log(@"boutta start try %d", _num_tries);
+    if(_num_tries > MAX_TRIES) return self;
+
+    if(_num_tries == 1) {
+        Log(@"first try");
+        [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0];
+    } else if(access( GAME_PATH"/main.lua", F_OK ) == -1) { // not found
+        Log(@"couldnt find file after %d try", _num_tries);
+        [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:DELAY];
+    } else {
+        Log(@"running loveboard");
+        loveboard_run();
+    }
+
     return self;
+}
+static void loveboard_bootstrap(id self)
+{
+    postFinishLaunch(self, postFinishLaunch_sel);
 }
 
 static BOOL (*orig_app_finished_launching)(id self, SEL _cmd, id app);
@@ -163,31 +186,15 @@ static BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
     } else {
         Log(@"set main ready is NULL");
     }
-    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0];
+    loveboard_bootstrap(self);
 
     return result;
 }
 
-static id post_init(id self, SEL _cmd)
+static BOOL(*orig_secure)(id self, SEL _cmd);
+static BOOL hook_secure(id self, SEL _cmd)
 {
-    //[self setUserInteractionEnabled:false];
-    //[self setAlpha:0.7];
-    return self;
-}
-
-static id (*orig_init)(id self, SEL _cmd, CGRect frame);
-static id hook_init(id self, SEL _cmd, CGRect frame)
-{
-    self = orig_init(self, _cmd, frame);
-    // allows the window to overlay on top of the lockscreen
-    // also, for some reason if you dont do this then
-    // the lockscreen wont take user input D:
-    if([self respondsToSelector:@selector(_setSecure:)]) {
-        [self _setSecure:true];
-    }
-    // im not even sure if this is effective at all.
-    [self performSelector:postFinishLaunch_sel withObject:nil afterDelay:0.0]; //calls post_init
-    return self;
+    return true;
 }
 
 MSInitialize
@@ -201,6 +208,5 @@ MSInitialize
 
     Class Window = objc_getClass("SDL_uikitwindow");
     Log(@"window: %@", Window);
-    class_addMethod(Window, postFinishLaunch_sel, (IMP)post_init, "@:@");
-    MSHookMessageEx(Window, @selector(initWithFrame:), (IMP)&hook_init, (IMP *)&orig_init);
+    MSHookMessageEx(Window, @selector(_shouldCreateContextAsSecure), (IMP)&hook_secure, (IMP *)&orig_secure);
 }
