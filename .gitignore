@@ -1,3 +1,5 @@
 tmp
 LoveBoard.dylib
 LoveBoard.deb
+.DS_Store
+*.xcuserdatad
