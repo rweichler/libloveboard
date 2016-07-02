@@ -2,6 +2,7 @@ NAME=LoveBoard
 DYLIB=$(NAME).dylib
 PLIST=$(NAME).plist
 DEB=$(NAME).deb
+LUA=lua
 
 all: $(DYLIB)
 
@@ -14,7 +15,7 @@ clean:
 
 package: $(DEB)
 	
-$(DEB): $(DYLIB) $(PLIST) LOVE_GAME DEBIAN
+$(DEB): $(DYLIB) $(PLIST) $(LUA) DEBIAN
 	@rm -rf tmp
 	@mkdir tmp
 	# deb info
@@ -28,7 +29,7 @@ $(DEB): $(DYLIB) $(PLIST) LOVE_GAME DEBIAN
 	# game
 	@mkdir tmp/var
 	@mkdir tmp/var/mobile
-	@cp -r LOVE_GAME tmp/var/mobile
+	@cp -r $(LUA) tmp/var/mobile
 	# liblove
 	@mkdir tmp/usr
 	@mkdir tmp/usr/lib
@@ -36,8 +37,8 @@ $(DEB): $(DYLIB) $(PLIST) LOVE_GAME DEBIAN
 	# relove command
 	@mkdir tmp/usr/bin
 	@cp relove tmp/usr/bin/
-	# pack it up
-	@dpkg-deb -Zgzip -b tmp
+	# pack it up ($@)
+	@dpkg-deb -Zgzip -b tmp > /dev/null
 	@mv tmp.deb $@
 
 
