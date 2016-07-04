@@ -29,7 +29,7 @@ $(DEB): $(DYLIB) $(PLIST) $(LUA) DEBIAN
 	# game
 	@mkdir tmp/var
 	@mkdir tmp/var/mobile
-	@cp -r $(LUA) tmp/var/mobile
+	@cp -r $(LUA) tmp/var/mobile/LoveBoard
 	# liblove
 	@mkdir tmp/usr
 	@mkdir tmp/usr/lib

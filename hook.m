@@ -5,7 +5,7 @@
 #include "luahack.h"
 #include <CoreGraphics/CoreGraphics.h>
 
-#define GAME_PATH "/var/mobile/LOVE_GAME"
+#define GAME_PATH "/var/mobile/LoveBoard"
 
 // pilfered from love.cpp
 static int love_preload(lua_State *L, lua_CFunction f, const char *name)
@@ -17,6 +17,11 @@ static int love_preload(lua_State *L, lua_CFunction f, const char *name)
     lua_pop(L, 2);
     return 0;
 }
+
+const char *lua_preload =
+"package.path = '"GAME_PATH"/?.lua;'..package.path"
+"GAME_PATH = '"GAME_PATH"'"
+;
 
 
 // pilfered from love.cpp
@@ -34,7 +39,7 @@ static int runlove(int argc, char **argv)
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
 
-    luaL_dostring(L, "package.path = '"GAME_PATH"/?.lua;'..package.path");
+    luaL_dostring(L, lua_preload);
 
     // Add love to package.preload for easy requiring.
     love_preload(L, luaopen_love, "love");
