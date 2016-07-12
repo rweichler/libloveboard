@@ -1,6 +1,6 @@
 package: loveboard
 Name: LoveBoard
-Version: 0.1~alpha6
+Version: 0.1~alpha7
 Architecture: iphoneos-arm
 Depends: mobilesubstrate, cycript
 Depiction: http://cydia.r333d.com/view/loveboard
