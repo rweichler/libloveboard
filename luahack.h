@@ -17,6 +17,7 @@ void (*lua_pushcclosure)(lua_State *, lua_CFunction, int);
 void (*lua_setfield)(lua_State *, int, const char *);
 void (*lua_settop)(lua_State *, int);
 #define lua_pop(L,n)            lua_settop(L, -(n)-1)
+void (*lua_pushvalue)(lua_State *, int);
 
 lua_CFunction luaopen_love;
 
@@ -34,6 +35,9 @@ float (*lua_tonumber)(lua_State *, int);
 int (*luaL_loadfile) (lua_State *, const char *);
 int (*lua_pcall) (lua_State *, int, int, int);
 int (*luaL_loadstring) (lua_State *, const char *);
+
+const char * (*lua_tolstring)(lua_State *, int, size_t *);
+#define lua_tostring(L,i)       lua_tolstring(L, (i), NULL)
 
 #define luaL_dostring(L, s) \
         (luaL_loadstring(L, s) || lua_pcall(L, 0, LUA_MULTRET, 0))
@@ -82,4 +86,6 @@ static void load_liblove()
 
     SET(love_SDL_SetMainReady);
     SET(love_SDL_iPhoneSetEventPump);
+    SET(lua_tolstring);
+    SET(lua_pushvalue);
 }

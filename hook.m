@@ -24,6 +24,21 @@ const char *lua_preload =
 ;
 
 
+static lua_State *THE_STATE;
+const char *run_lua_code(const char *code)
+{
+    lua_State *L = THE_STATE;
+    if(luaL_loadstring(L, code) != 0) {
+        return "syntax error";
+    } else {
+        lua_pcall(L, 0, 1, 0);
+        lua_getglobal(L, "tostring");
+        lua_pushvalue(L, -2);
+        lua_pcall(L, 1, 1, 0);
+        return lua_tostring(L, -1);
+    }
+}
+
 // pilfered from love.cpp
 static int runlove(int argc, char **argv)
 {
@@ -37,6 +52,7 @@ static int runlove(int argc, char **argv)
         Log(@"%s", *arg);
     }
     lua_State *L = luaL_newstate();
+    THE_STATE = L;
     luaL_openlibs(L);
 
     luaL_dostring(L, lua_preload);
@@ -199,6 +215,7 @@ static BOOL hook_app_finished_launching(id self, SEL _cmd, id app)
 static BOOL(*orig_secure)(id self, SEL _cmd);
 static BOOL hook_secure(id self, SEL _cmd)
 {
+    orig_secure(self, _cmd);
     return true;
 }
 
