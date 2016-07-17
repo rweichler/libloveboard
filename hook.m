@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include "luahack.h"
 #include <CoreGraphics/CoreGraphics.h>
+#include <rocketbootstrap.h>
 
 #define GAME_PATH "/var/mobile/LoveBoard"
 
@@ -28,8 +29,10 @@ static lua_State *THE_STATE;
 const char *run_lua_code(const char *code)
 {
     lua_State *L = THE_STATE;
-    if(luaL_loadstring(L, code) != 0) {
-        return "syntax error";
+    if(L == NULL) {
+        return "LoveBoard isn't running!";
+    } else if(luaL_loadstring(L, code) != 0) {
+        return lua_tostring(L, -1);
     } else {
         lua_pcall(L, 0, 1, 0);
         lua_getglobal(L, "tostring");
@@ -38,6 +41,36 @@ const char *run_lua_code(const char *code)
         return lua_tostring(L, -1);
     }
 }
+
+static CFDataRef Callback(CFMessagePortRef port,
+                          SInt32 messageID,
+                          CFDataRef data,
+                          void *info)
+{
+    CFIndex len = CFDataGetLength(data);
+    char yee[len];
+    CFDataGetBytes(data, CFRangeMake(0, len), (unsigned char*)yee);
+	const char *result = run_lua_code(yee);
+
+	return CFDataCreate(NULL, (const unsigned char *)result, strlen(result) + 1);
+}
+
+
+void create_port()
+{
+    CFMessagePortRef localPort = CFMessagePortCreateLocal(nil,
+                                 CFSTR("com.r333d.loveboard.console.server"),
+                                 Callback,
+                                 nil,
+                                 nil);
+    rocketbootstrap_cfmessageportexposelocal(localPort);
+    CFRunLoopSourceRef runLoopSource = CFMessagePortCreateRunLoopSource(nil, localPort, 0);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(),
+                       runLoopSource,
+                       kCFRunLoopCommonModes);
+
+}
+
 
 // pilfered from love.cpp
 static int runlove(int argc, char **argv)
@@ -111,6 +144,7 @@ static int runlove(int argc, char **argv)
         retval = (int) lua_tonumber(L, -1);
 
     lua_close(L);
+    THE_STATE = NULL;
 
     return retval;
 }
@@ -231,4 +265,5 @@ MSInitialize
     Class Window = objc_getClass("SDL_uikitwindow");
     Log(@"window: %@", Window);
     MSHookMessageEx(Window, @selector(_shouldCreateContextAsSecure), (IMP)&hook_secure, (IMP *)&orig_secure);
+    create_port();
 }
