@@ -30,7 +30,7 @@ const char *run_lua_code(const char *code)
 {
     lua_State *L = THE_STATE;
     if(L == NULL) {
-        return "LoveBoard isn't running!";
+        return "LoveBoard isn't running you fucking retard! Use the `relove` command to restart it.";
     } else if(luaL_loadstring(L, code) != 0) {
         return lua_tostring(L, -1);
     } else {
