@@ -3,7 +3,8 @@ DYLIB=$(NAME).dylib
 PLIST=$(NAME).plist
 DEB=$(NAME).deb
 LUA=lua
-LOCY=locy
+LIBLUCY=liblucy.dylib
+LUCY=lucy.lua
 
 all: $(DYLIB) $(LOCY)
 
@@ -17,7 +18,7 @@ clean:
 
 package: $(DEB)
 	
-$(DEB): $(DYLIB) $(LOCY) $(PLIST) $(LUA) DEBIAN
+$(DEB): $(DYLIB) $(LIBLUCY) $(PLIST) $(LUA) $(LUCY) DEBIAN
 	@rm -rf tmp
 	@mkdir tmp
 	# deb info
@@ -40,7 +41,8 @@ $(DEB): $(DYLIB) $(LOCY) $(PLIST) $(LUA) DEBIAN
 	@mkdir tmp/usr/bin
 	@cp relove tmp/usr/bin/
 	# locy command
-	@cp locy tmp/usr/bin/
+	@cp $(LIBLUCY) tmp/usr/lib/
+	@cp $(LUCY) tmp/usr/bin/lucy
 	# pack it up ($@)
 	@dpkg-deb -Zgzip -b tmp > /dev/null
 	@mv tmp.deb $@
@@ -49,8 +51,8 @@ $(DEB): $(DYLIB) $(LOCY) $(PLIST) $(LUA) DEBIAN
 $(DYLIB): hook.m luahack.h
 	clang $< -dynamiclib -o $@ -Linc -Iinc -lsubstrate -lrocketbootstrap -framework Foundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path` -Wno-objc-method-access
 
-$(LOCY): locy.c
-	clang $< -o $@ -Linc -Iinc -lrocketbootstrap -framework CoreFoundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path`
+$(LIBLUCY): lucy.c
+	clang $< -o $@ -DDYLIB -Linc -Iinc -lrocketbootstrap -framework CoreFoundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path` -dynamiclib
 
 SSH_FLAGS=-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 

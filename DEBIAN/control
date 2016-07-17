@@ -3,6 +3,7 @@ Name: LoveBoard
 Version: 0.1~alpha7
 Architecture: iphoneos-arm
 Depends: mobilesubstrate, cycript
+Conflicts: com.r333d.lucy
 Depiction: http://cydia.r333d.com/view/loveboard
 Description: I LÖVE SpringBoard.
 Maintainer: r333d <rweichler+cydia+loveboard@gmail.com>
