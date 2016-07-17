@@ -52,9 +52,13 @@ function run_command()
     if command == "exit" then
         EXIT()
     end
-    PRINT(SEND_DATA(command))
-    command = ""
-    PROMPT()
+    if #command > 0 then
+        PRINT(SEND_DATA(command))
+        command = ""
+        PROMPT()
+    else
+        PROMPT(true)
+    end
 end
 
 C.signal(SIGINT, function()
@@ -84,7 +88,7 @@ function GREEN_PRINT(str)
 end
 
 function PROMPT(no_newline)
-    local p = "\x1B[1;31m".."l".."\x1B[33m".."u".."\x1B[32m".."c".."\x1B[34m".."y".."\x1B[31m".."#".."\x1B[0m "
+    local p = "\x1B[1;31m".."l".."\x1B[33m".."u".."\x1B[32m".."c".."\x1B[34m".."y".."\x1B[35m".."#".."\x1B[0m "
     if no_newline then
         PRINT(p)
     else
