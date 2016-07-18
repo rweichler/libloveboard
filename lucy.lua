@@ -90,8 +90,10 @@ end
 
 prompt_text = "\x1B[1;31m".."l".."\x1B[33m".."u".."\x1B[32m".."c".."\x1B[34m".."y".."\x1B[35m".."#".."\x1B[0m "
 function PROMPT(newline)
+    if newline == nil then newline = true end
+
     command = ""
-    if newline == false then
+    if newline then
         PRINT('\n')
     end
     PRINT(prompt_text)
