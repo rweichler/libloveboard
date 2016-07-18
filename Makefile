@@ -6,7 +6,7 @@ LUA=lua
 LIBLUCY=liblucy.dylib
 LUCY=lucy.lua
 
-all: $(DYLIB) $(LOCY)
+all: $(DYLIB) $(LIBLUCY)
 
 .PHONY: all clean package
 

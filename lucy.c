@@ -2,7 +2,7 @@
 #include "rocketbootstrap.h"
 
 CFMessagePortRef l_ipc_create_port(const char *name);
-const char *l_ipc_send_data(CFMessagePortRef port, const char *cmd, bool should_recieve);
+void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result);
 #ifndef DYLIB
 int main(int argc, char *argv[])
 {
@@ -42,13 +42,13 @@ CFMessagePortRef l_ipc_create_port(const char *name)
 }
 
 typedef UInt8 byte_t;
-byte_t *yee = NULL;
-const char *l_ipc_send_data(CFMessagePortRef port, const char *cmd, bool should_recieve)
+void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result)
 {
     size_t cmd_len = strlen(cmd);
     CFDataRef data = CFDataCreate(NULL, (const byte_t *)cmd, cmd_len + 1);
     SInt32 messageID = 0x1111; // Arbitrary
     CFTimeInterval timeout = 10.0;
+
 
 
     CFDataRef returnData = NULL;
@@ -58,24 +58,23 @@ const char *l_ipc_send_data(CFMessagePortRef port, const char *cmd, bool should_
         data,
         timeout,
         timeout,
-        (should_recieve ? kCFRunLoopDefaultMode : NULL),
+        (result != NULL ? kCFRunLoopDefaultMode : NULL),
         &returnData
     );
     
     if (returnData && status == kCFMessagePortSuccess) {
         CFIndex len = CFDataGetLength(returnData);
         if(len == 0) {
-            return NULL;
+            if(result)
+                *result = NULL;
+        } else {
+            *result = malloc(cmd_len * sizeof(byte_t));
+            CFDataGetBytes(returnData, CFRangeMake(0, len), (byte_t *)(*result));
         }
-        if(yee != NULL) {
-            //free(yee);
-        }
-        yee = malloc(cmd_len * sizeof(byte_t));
-        CFDataGetBytes(returnData, CFRangeMake(0, len), yee);
         CFRelease(returnData);
-        return (const char *)yee;
     } else {
-        return NULL;
+        if(result)
+            *result = NULL;
     }
 }
 

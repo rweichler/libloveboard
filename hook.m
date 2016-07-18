@@ -42,6 +42,7 @@ const char *run_lua_code(const char *code)
     }
 }
 
+void loveboard_run();
 static CFDataRef Callback(CFMessagePortRef port,
                           SInt32 messageID,
                           CFDataRef data,
@@ -50,9 +51,16 @@ static CFDataRef Callback(CFMessagePortRef port,
     CFIndex len = CFDataGetLength(data);
     char yee[len];
     CFDataGetBytes(data, CFRangeMake(0, len), (unsigned char*)yee);
-	const char *result = run_lua_code(yee);
+    if(strcmp(yee, "relove") == 0) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            loveboard_run();
+        });
+        return NULL;
+    }else {
+        const char *result = run_lua_code(yee);
+        return CFDataCreate(NULL, (const unsigned char *)result, strlen(result) + 1);
+    }
 
-	return CFDataCreate(NULL, (const unsigned char *)result, strlen(result) + 1);
 }
 
 

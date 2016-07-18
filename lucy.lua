@@ -7,28 +7,29 @@ void printf(const char *fmt, ...);
 void (*signal(int sig, void (*func)(int)))(int);
 bool isprint(int c);
 ]]
-local locy = ffi.load("/usr/lib/liblucy.dylib")
+local lucy = ffi.load("/usr/lib/liblucy.dylib")
 ffi.cdef[[
 void *l_ipc_create_port(const char *name);
-const char *l_ipc_send_data(void *port, const char *cmd, bool should_recieve);
+void l_ipc_send_data(void *port, const char *cmd, char **result);
 bool l_toggle_noncanonical_mode();
 ]]
 local ffi_string = ffi.string
 do
-    local port = locy.l_ipc_create_port("com.r333d.loveboard.console.server")
-    local send_data = locy.l_ipc_send_data
+    local port = lucy.l_ipc_create_port("com.r333d.loveboard.console.server")
+    local send_data = lucy.l_ipc_send_data
     local NULL = ffi.NULL
     function SEND_DATA(cmd, should_recieve)
         if should_recieve == nil then
             should_recieve = true
         end
-        local result = send_data(port, cmd, should_recieve)
-        if not (result == NULL) then
-            return ffi_string(result)
+        local result = should_recieve and ffi.new("char *[1]") or nil
+        send_data(port, cmd, result) 
+        if result and not (result[0] == NULL) then
+            return ffi_string(result[0])
         end
     end
     function EXIT(code)
-        locy.l_toggle_noncanonical_mode()
+        lucy.l_toggle_noncanonical_mode()
         os.exit(code or 0)
     end
     STDIN_FD = 0
@@ -39,7 +40,7 @@ end
 
 local C = ffi.C
 
-is_piping = not locy.l_toggle_noncanonical_mode()
+is_piping = not lucy.l_toggle_noncanonical_mode()
 
 if is_piping then -- just process the inputs, no pretty shell needed
     for line in io.input():lines() do
@@ -52,19 +53,19 @@ function run_command()
     if command == "exit" then
         EXIT()
     end
+    local result
     if #command > 0 then
-        PRINT(SEND_DATA(command))
-        command = ""
-        PROMPT()
-    else
-        PROMPT(true)
+        result = SEND_DATA(command) -- this errors
+        if result then
+            PRINT(result)
+        end
     end
+    PROMPT(result or false)
 end
 
 C.signal(SIGINT, function()
     PRINT("^C")
     PROMPT()
-    command = ""
 end)
 
 function PRINT(str)
@@ -87,18 +88,17 @@ function GREEN_PRINT(str)
     PRINT("\x1B[0m")
 end
 
-function PROMPT(no_newline)
-    local p = "\x1B[1;31m".."l".."\x1B[33m".."u".."\x1B[32m".."c".."\x1B[34m".."y".."\x1B[35m".."#".."\x1B[0m "
-    if no_newline then
-        PRINT(p)
-    else
-        PRINT('\n'..p)
+prompt_text = "\x1B[1;31m".."l".."\x1B[33m".."u".."\x1B[32m".."c".."\x1B[34m".."y".."\x1B[35m".."#".."\x1B[0m "
+function PROMPT(newline)
+    command = ""
+    if newline == false then
+        PRINT('\n')
     end
+    PRINT(prompt_text)
 end
 
-command = ""
 buffer = ffi.new("char[3]")
-PROMPT(true)
+PROMPT(false)
 while true do
     local count = C.read(STDIN_FD, buffer, 3)
     if count == 0 then
