@@ -1,4 +1,38 @@
 #!/usr/bin/env luajit
+
+KEY = {}
+
+--enter
+KEY[0x0A] = function()
+    PRINT("\n")
+    run_command()
+end
+--ctrl-D
+KEY[0x04] = function()
+    if #command == 0 then
+        PRINT("^D\n")
+        EXIT()
+    else
+        BELL()
+    end
+end
+--backspace
+KEY[0x08] = function()
+    if #command == 0 then
+        BELL()
+    else
+        command = string.sub(command, 1, #command - 1)
+        PRINT("\b \b")
+    end
+end
+--delete
+KEY[0x7f] = KEY[0x08]
+
+
+
+
+
+
 local ffi = require 'ffi'
 ffi.cdef[[
 int read(int handle, void *buffer, int nbyte);
@@ -32,13 +66,14 @@ do
         lucy.l_toggle_noncanonical_mode()
         os.exit(code or 0)
     end
-    STDIN_FD = 0
-    STDOUT_FD = 1
-    STDRERR_FD = 2
-    SIGINT = 2
 end
 
 local C = ffi.C
+
+STDIN_FD = 0
+STDOUT_FD = 1
+STDRERR_FD = 2
+SIGINT = 2
 
 is_piping = not lucy.l_toggle_noncanonical_mode()
 
@@ -99,6 +134,15 @@ function PROMPT(newline)
     PRINT(prompt_text)
 end
 
+function PRINT_BUFFER()
+    local c = buffer[0]
+    if C.isprint(c) then
+        local s = string.char(c)
+        PRINT(s)
+        command = command..s
+    end
+end
+
 buffer = ffi.new("char[3]")
 PROMPT(false)
 while true do
@@ -106,30 +150,9 @@ while true do
     if count == 0 then
         return
     elseif count == 1 then
-        local c = buffer[0]
-        if C.isprint(c) then
-            local s = string.char(c)
-            PRINT(s)
-            command = command..s
-        end
-        if c == 0x0A then --enter
-            PRINT("\n")
-            run_command()
-        elseif c == 0x04 then -- ^D
-            if #command == 0 then
-                PRINT("^D\n")
-                EXIT()
-            else
-                BELL()
-            end
-        elseif c == 0x08 or c == 0x7f then --backspace/delete
-            if #command == 0 then
-                BELL()
-            else
-                command = string.sub(command, 1, #command - 1)
-                PRINT("\b \b")
-            end
-        end
+        PRINT_BUFFER()
+        local f = KEY[buffer[0]]
+        if f then f() end
     end
 end
 

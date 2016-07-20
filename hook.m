@@ -51,7 +51,7 @@ static CFDataRef Callback(CFMessagePortRef port,
     CFIndex len = CFDataGetLength(data);
     char yee[len];
     CFDataGetBytes(data, CFRangeMake(0, len), (unsigned char*)yee);
-    if(strcmp(yee, "relove") == 0) {
+    if(THE_STATE == NULL && strcmp(yee, "relove") == 0) {
         dispatch_async(dispatch_get_main_queue(), ^{
             loveboard_run();
         });
