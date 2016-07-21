@@ -2,7 +2,7 @@
 #include "rocketbootstrap.h"
 
 CFMessagePortRef l_ipc_create_port(const char *name);
-void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result);
+bool l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result);
 #ifndef DYLIB
 int main(int argc, char *argv[])
 {
@@ -42,7 +42,7 @@ CFMessagePortRef l_ipc_create_port(const char *name)
 }
 
 typedef UInt8 byte_t;
-void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result)
+bool l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result)
 {
     size_t cmd_len = strlen(cmd);
     CFDataRef data = CFDataCreate(NULL, (const byte_t *)cmd, cmd_len + 1);
@@ -62,21 +62,19 @@ void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result)
         &returnData
     );
     CFRelease(data);
+
+    if(status != kCFMessagePortSuccess) return false;
     
-    if (returnData && status == kCFMessagePortSuccess) {
+    if (returnData != NULL) {
         CFIndex len = CFDataGetLength(returnData);
-        if(len == 0) {
-            if(result)
-                *result = NULL;
-        } else {
-            *result = malloc(len * sizeof(byte_t));
-            CFDataGetBytes(returnData, CFRangeMake(0, len), (byte_t *)(*result));
-        }
+        *result = malloc(len * sizeof(byte_t));
+        CFDataGetBytes(returnData, CFRangeMake(0, len), (byte_t *)(*result));
         CFRelease(returnData);
-    } else {
-        if(result)
-            *result = NULL;
+    } else if(result != NULL) {
+        *result = NULL;
     }
+
+    return true;
 }
 
 #include <termios.h>

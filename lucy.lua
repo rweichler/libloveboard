@@ -21,14 +21,22 @@ KEY[1][0x04] = function()
 end
 --backspace
 KEY[1][0x08] = function()
-    if #command == 0 then
+    if #command == 0 or cursor_pos == 1 then
         BELL()
     else
-        command = string.sub(command, 1, #command - 1)
-        if cursor_pos then
-            cursor_pos = cursor_pos - 1
+        local tail
+        if cursor_pos == #command + 1 then
+            command = string.sub(command, 1, #command - 1)
+        else
+            tail = string.sub(command, cursor_pos, #command)
+            command = string.sub(command, 1, cursor_pos - 2)..tail
         end
+        cursor_pos = cursor_pos - 1
         BACKSPACE(1)
+        if tail then
+            PRINT(tail..' ')
+            CURSOR_LEFT(#tail + 1)
+        end
     end
 end
 --delete
@@ -47,14 +55,13 @@ KEY[3][0x41] = function()
         return
     end
     if command then
-        if cursor_pos then
-            CURSOR_RIGHT(#command + 1 - cursor_pos)
-            cursor_pos = nil
-        end
+        CURSOR_RIGHT(#command + 1 - cursor_pos)
+        cursor_pos = #command + 1
         BACKSPACE(#command)
     end
     command = history[history_idx]
     PRINT(command)
+    cursor_pos = #command + 1
 end
 
 --down arrow
@@ -65,10 +72,8 @@ KEY[3][0x42] = function()
     end
     
     history_idx = history_idx + 1
-    if cursor_pos then
-        CURSOR_RIGHT(#command + 1 - cursor_pos)
-        cursor_pos = nil
-    end
+    CURSOR_RIGHT(#command + 1 - cursor_pos)
+    cursor_pos = #command + 1
     BACKSPACE(#command)
     if history_idx > #history then
         history_idx = nil
@@ -77,11 +82,11 @@ KEY[3][0x42] = function()
         command = history[history_idx]
         PRINT(command)
     end
+    cursor_pos = #command + 1
 end
 
 --right arrow
 KEY[3][0x43] = function()
-    if not cursor_pos then cursor_pos = #command + 1 end
     cursor_pos = cursor_pos + 1
     if cursor_pos > #command + 1 then
         BELL()
@@ -93,7 +98,6 @@ end
 
 --left arrow
 KEY[3][0x44] = function()
-    if not cursor_pos then cursor_pos = #command + 1 end
     cursor_pos = cursor_pos - 1
     if cursor_pos < 1 then
         BELL()
@@ -110,16 +114,22 @@ int write(int handle, const char *buffer, int nbyte);
 void printf(const char *fmt, ...);
 void (*signal(int sig, void (*func)(int)))(int);
 bool isprint(int c);
+void free(void *);
 ]]
 local lucy = ffi.load("/usr/lib/liblucy.dylib")
 ffi.cdef[[
 void *l_ipc_create_port(const char *name);
-void l_ipc_send_data(void *port, const char *cmd, char **result);
+bool l_ipc_send_data(void *port, const char *cmd, char **result);
 bool l_toggle_noncanonical_mode();
 ]]
 local ffi_string = ffi.string
+local C = ffi.C
 do
-    local port = lucy.l_ipc_create_port("com.r333d.loveboard.console.server")
+    local port
+    local function refresh_port()
+        port = lucy.l_ipc_create_port("com.r333d.loveboard.console.server")
+    end
+    refresh_port()
     local send_data = lucy.l_ipc_send_data
     local NULL = ffi.NULL
     local string_ptr = ffi.typeof("char *[1]")
@@ -128,9 +138,15 @@ do
         if not (should_recieve == false) then
             result = ffi.new(string_ptr)
         end
-        send_data(port, cmd, result) 
+        local success = send_data(port, cmd, result) 
+        if not success then
+            print("Connection to SpringBoard has been reset")
+            EXIT()
+        end
         if result and not (result[0] == NULL) then
-            return ffi_string(result[0])
+            local str = ffi_string(result[0])
+            C.free(result[0])
+            return str
         end
     end
     function EXIT(code)
@@ -139,7 +155,6 @@ do
     end
 end
 
-local C = ffi.C
 
 STDIN_FD = 0
 STDOUT_FD = 1
@@ -176,7 +191,9 @@ function run_command()
 end
 
 C.signal(SIGINT, function()
+    CURSOR_RIGHT(#command + 1 - cursor_pos)
     PRINT("^C")
+    history_idx = nil
     PROMPT()
 end)
 
@@ -185,10 +202,12 @@ function PRINT(str)
 end
 
 function CURSOR_RIGHT(n)
+    if n == 0 then return end
     PRINT("\x1B["..n.."C")
 end
 
 function CURSOR_LEFT(n)
+    if n == 0 then return end
     PRINT("\x1B["..n.."D")
 end
 
@@ -223,18 +242,23 @@ function PROMPT(newline)
         PRINT('\n')
     end
     PRINT(prompt_text)
-    cursor_pos = nil
+    cursor_pos = 1
 end
 
 function PRINT_BUFFER()
     local c = buffer[0]
     if C.isprint(c) then
         local s = string.char(c)
-        PRINT(s)
-        if cursor_pos then
-            cursor_pos = cursor_pos + 1
+        if cursor_pos == #command + 1 then
+            PRINT(s)
+            command = command..s
+        else
+            local tail = s..string.sub(command, cursor_pos, #command)
+            command = string.sub(command, 1, cursor_pos - 1)..tail
+            PRINT(tail)
+            CURSOR_LEFT(#tail - 1)
         end
-        command = command..s
+        cursor_pos = cursor_pos + 1
     end
 end
 
