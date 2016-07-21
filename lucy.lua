@@ -1,14 +1,17 @@
 #!/usr/bin/env luajit
 
 KEY = {}
+KEY[1] = {}
+KEY[2] = {}
+KEY[3] = {}
 
 --enter
-KEY[0x0A] = function()
+KEY[1][0x0A] = function()
     PRINT("\n")
     run_command()
 end
 --ctrl-D
-KEY[0x04] = function()
+KEY[1][0x04] = function()
     if #command == 0 then
         PRINT("^D\n")
         EXIT()
@@ -17,21 +20,88 @@ KEY[0x04] = function()
     end
 end
 --backspace
-KEY[0x08] = function()
+KEY[1][0x08] = function()
     if #command == 0 then
         BELL()
     else
         command = string.sub(command, 1, #command - 1)
-        PRINT("\b \b")
+        if cursor_pos then
+            cursor_pos = cursor_pos - 1
+        end
+        BACKSPACE(1)
     end
 end
 --delete
-KEY[0x7f] = KEY[0x08]
+KEY[1][0x7f] = KEY[1][0x08]
 
+--up arrow
+KEY[3][0x41] = function()
+    if not history_idx then
+        history_idx = #history
+    else
+        history_idx = history_idx - 1
+    end
+    if history_idx < 1 then
+        history_idx = 1
+        BELL()
+        return
+    end
+    if command then
+        if cursor_pos then
+            CURSOR_RIGHT(#command + 1 - cursor_pos)
+            cursor_pos = nil
+        end
+        BACKSPACE(#command)
+    end
+    command = history[history_idx]
+    PRINT(command)
+end
 
+--down arrow
+KEY[3][0x42] = function()
+    if not history_idx then
+        BELL()
+        return
+    end
+    
+    history_idx = history_idx + 1
+    if cursor_pos then
+        CURSOR_RIGHT(#command + 1 - cursor_pos)
+        cursor_pos = nil
+    end
+    BACKSPACE(#command)
+    if history_idx > #history then
+        history_idx = nil
+        command = ""
+    else
+        command = history[history_idx]
+        PRINT(command)
+    end
+end
 
+--right arrow
+KEY[3][0x43] = function()
+    if not cursor_pos then cursor_pos = #command + 1 end
+    cursor_pos = cursor_pos + 1
+    if cursor_pos > #command + 1 then
+        BELL()
+        cursor_pos = #command + 1
+    else
+        CURSOR_RIGHT(1)
+    end
+end
 
-
+--left arrow
+KEY[3][0x44] = function()
+    if not cursor_pos then cursor_pos = #command + 1 end
+    cursor_pos = cursor_pos - 1
+    if cursor_pos < 1 then
+        BELL()
+        cursor_pos = 1
+    else
+        CURSOR_LEFT(1)
+    end
+end
 
 local ffi = require 'ffi'
 ffi.cdef[[
@@ -85,17 +155,23 @@ if is_piping then -- just process the inputs, no pretty shell needed
     return
 end
 
+function string.trim(s)
+  return (string.gsub(s, "^%s*(.-)%s*$", "%1"))
+end
+
 function run_command()
     if command == "exit" then
         EXIT()
     end
     local result
-    if #command > 0 then
+    if #string.trim(command) > 0 then
         result = SEND_DATA(command)
         if result then
             PRINT(result)
         end
+        table.insert(history, command)
     end
+    history_idx = nil
     PROMPT(result or false)
 end
 
@@ -108,10 +184,24 @@ function PRINT(str)
     C.write(STDOUT_FD, str, #str)
 end
 
+function CURSOR_RIGHT(n)
+    PRINT("\x1B["..n.."C")
+end
+
+function CURSOR_LEFT(n)
+    PRINT("\x1B["..n.."D")
+end
+
 function MAGENTA_PRINT(str)
     PRINT("\x1B[1;34m")
     PRINT(str)
     PRINT("\x1B[0m")
+end
+
+function BACKSPACE(n)
+    for i=1,n do
+        PRINT("\b \b")
+    end
 end
 
 function BELL()
@@ -133,6 +223,7 @@ function PROMPT(newline)
         PRINT('\n')
     end
     PRINT(prompt_text)
+    cursor_pos = nil
 end
 
 function PRINT_BUFFER()
@@ -140,20 +231,25 @@ function PRINT_BUFFER()
     if C.isprint(c) then
         local s = string.char(c)
         PRINT(s)
+        if cursor_pos then
+            cursor_pos = cursor_pos + 1
+        end
         command = command..s
     end
 end
 
 buffer = ffi.new("char[3]")
+history = {}
 PROMPT(false)
 while true do
     local count = C.read(STDIN_FD, buffer, 3)
-    if count == 0 then
-        return
-    elseif count == 1 then
+    if count == 0 then return end
+
+    if count == 1 then
         PRINT_BUFFER()
-        local f = KEY[buffer[0]]
-        if f then f() end
     end
+
+    local f = KEY[count][buffer[count - 1]]
+    if f then f() end
 end
 
