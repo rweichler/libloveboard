@@ -61,6 +61,7 @@ void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result)
         (result != NULL ? kCFRunLoopDefaultMode : NULL),
         &returnData
     );
+    CFRelease(data);
     
     if (returnData && status == kCFMessagePortSuccess) {
         CFIndex len = CFDataGetLength(returnData);
@@ -68,7 +69,7 @@ void l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result)
             if(result)
                 *result = NULL;
         } else {
-            *result = malloc(cmd_len * sizeof(byte_t));
+            *result = malloc(len * sizeof(byte_t));
             CFDataGetBytes(returnData, CFRangeMake(0, len), (byte_t *)(*result));
         }
         CFRelease(returnData);

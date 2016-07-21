@@ -52,11 +52,12 @@ do
     local port = lucy.l_ipc_create_port("com.r333d.loveboard.console.server")
     local send_data = lucy.l_ipc_send_data
     local NULL = ffi.NULL
+    local string_ptr = ffi.typeof("char *[1]")
     function SEND_DATA(cmd, should_recieve)
-        if should_recieve == nil then
-            should_recieve = true
+        local result = nil
+        if not (should_recieve == false) then
+            result = ffi.new(string_ptr)
         end
-        local result = should_recieve and ffi.new("char *[1]") or nil
         send_data(port, cmd, result) 
         if result and not (result[0] == NULL) then
             return ffi_string(result[0])
@@ -90,7 +91,7 @@ function run_command()
     end
     local result
     if #command > 0 then
-        result = SEND_DATA(command) -- this errors
+        result = SEND_DATA(command)
         if result then
             PRINT(result)
         end
