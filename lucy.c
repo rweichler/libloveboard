@@ -1,38 +1,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include "rocketbootstrap.h"
 
-CFMessagePortRef l_ipc_create_port(const char *name);
-bool l_ipc_send_data(CFMessagePortRef port, const char *cmd, char **result);
-#ifndef DYLIB
-int main(int argc, char *argv[])
-{
-    if(argc == 1) {
-        printf("you needa type the lua code too you fucking RETARD\n");
-        return 1;
-    }
-
-    int len = 1;
-    for(int i = 1; i < argc; i++) {
-        len += strlen(argv[i]) + 1;
-    }
-    char cmd[len];
-    cmd[0] = 0;
-    for(int i = 1; i < argc; i++) {
-        strcat(cmd, argv[i]);
-        strcat(cmd, " ");
-    }
-
-    CFMessagePortRef port = l_ipc_create_port("com.r333d.loveboard.console.server");
-    const char *result = l_ipc_send_data(port, cmd, true);
-    if(result == NULL) {
-        printf("return data is fucking NULL\n");
-    } else {
-        printf("%s\n", result);
-    }
-    return 0;
-}
-#endif
-
 CFMessagePortRef l_ipc_create_port(const char *name)
 {
     CFStringRef str = CFStringCreateWithCString(NULL, name, kCFStringEncodingUTF8);

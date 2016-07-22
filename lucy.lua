@@ -1,5 +1,18 @@
 #!/usr/bin/env luajit
 
+
+function main_loop()
+    local count = C.read(STDIN_FD, buffer, 3)
+    if count == 0 then return end
+
+    if count == 1 then
+        PRINT_BUFFER()
+    end
+
+    local f = KEY[count][buffer[count - 1]]
+    if f then f() end
+end
+
 KEY = {}
 KEY[1] = {}
 KEY[2] = {}
@@ -41,6 +54,15 @@ KEY[1][0x08] = function()
 end
 --delete
 KEY[1][0x7f] = KEY[1][0x08]
+--^L
+KEY[1][12] = function()
+    local steps = #command + 1 - cursor_pos
+    CURSOR_RIGHT(steps)
+    C.system("clear")
+    PRINT(prompt_text)
+    PRINT(command)
+    CURSOR_LEFT(steps)
+end
 
 --up arrow
 KEY[3][0x41] = function()
@@ -115,6 +137,7 @@ void printf(const char *fmt, ...);
 void (*signal(int sig, void (*func)(int)))(int);
 bool isprint(int c);
 void free(void *);
+void system(const char *);
 ]]
 local lucy = ffi.load("/usr/lib/liblucy.dylib")
 ffi.cdef[[
@@ -123,7 +146,7 @@ bool l_ipc_send_data(void *port, const char *cmd, char **result);
 bool l_toggle_noncanonical_mode();
 ]]
 local ffi_string = ffi.string
-local C = ffi.C
+C = ffi.C
 do
     local port
     local function refresh_port()
@@ -140,8 +163,7 @@ do
         end
         local success = send_data(port, cmd, result) 
         if not success then
-            print("Connection to SpringBoard has been reset")
-            EXIT()
+            error("Connection to SpringBoard has been reset")
         end
         if result and not (result[0] == NULL) then
             local str = ffi_string(result[0])
@@ -162,6 +184,11 @@ STDRERR_FD = 2
 SIGINT = 2
 
 is_piping = not lucy.l_toggle_noncanonical_mode()
+local orig_error = error
+error = function(...)
+    lucy.l_toggle_noncanonical_mode()
+    orig_error(...)
+end
 
 if is_piping then -- just process the inputs, no pretty shell needed
     for line in io.input():lines() do
@@ -266,14 +293,6 @@ buffer = ffi.new("char[3]")
 history = {}
 PROMPT(false)
 while true do
-    local count = C.read(STDIN_FD, buffer, 3)
-    if count == 0 then return end
-
-    if count == 1 then
-        PRINT_BUFFER()
-    end
-
-    local f = KEY[count][buffer[count - 1]]
-    if f then f() end
+    main_loop()
 end
 
