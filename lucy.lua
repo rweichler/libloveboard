@@ -57,7 +57,7 @@ KEY[1][0x7f] = KEY[1][0x08]
 --^L
 KEY[1][12] = function()
     local steps = #command + 1 - cursor_pos
-    CURSOR_RIGHT(steps)
+    --CURSOR_RIGHT(steps)
     C.system("clear")
     PRINT(prompt_text)
     PRINT(command)
@@ -72,7 +72,11 @@ KEY[3][0x41] = function()
         history_idx = history_idx - 1
     end
     if history_idx < 1 then
-        history_idx = 1
+        if #history == 0 then
+            history_idx = nil
+        else
+            history_idx = 1
+        end
         BELL()
         return
     end

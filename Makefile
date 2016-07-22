@@ -57,6 +57,6 @@ $(LIBLUCY): lucy.c
 SSH_FLAGS=-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 install: $(DEB)
-	scp $(SSH_FLAGS) $(DEB) 5s:.
-	ssh $(SSH_FLAGS) 5s "dpkg -i $(DEB)"
-	ssh $(SSH_FLAGS) 5s "rm $(DEB)"
+	scp $(SSH_FLAGS) $(DEB) iphone:.
+	ssh $(SSH_FLAGS) iphone "dpkg -i $(DEB)"
+	ssh $(SSH_FLAGS) iphone "rm $(DEB)"
