@@ -48,8 +48,9 @@ $(DEB): $(DYLIB) $(LIBLUCY) $(PLIST) $(LUA) $(LUCY) DEBIAN
 	@mv tmp.deb $@
 
 
-$(DYLIB): hook.m luahack.h
-	clang $< -dynamiclib -o $@ -Linc -Iinc -lsubstrate -lrocketbootstrap -framework Foundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path` -Wno-objc-method-access
+M_FILES=hook.m ffi.m
+$(DYLIB): $(M_FILES) luahack.h
+	clang $(M_FILES) -dynamiclib -o $@ -Linc -Iinc -lsubstrate -lrocketbootstrap -framework Foundation -framework UIKit -framework ImageIO -framework MobileCoreServices -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path` -Wno-objc-method-access
 
 $(LIBLUCY): lucy.c
 	clang $< -o $@ -DDYLIB -Linc -Iinc -lrocketbootstrap -framework CoreFoundation -arch arm64 -arch armv7 -isysroot `xcrun --sdk iphoneos --show-sdk-path` -dynamiclib
