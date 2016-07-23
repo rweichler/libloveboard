@@ -212,7 +212,7 @@ function run_command()
     local result
     if #string.trim(command) > 0 then
         result = SEND_DATA(command)
-        if result then
+        if result and not(result == 'nil') then
             PRINT(result)
         end
         table.insert(history, command)
