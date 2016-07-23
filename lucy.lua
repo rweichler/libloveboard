@@ -63,6 +63,17 @@ KEY[1][12] = function()
     PRINT(command)
     CURSOR_LEFT(steps)
 end
+--^A
+KEY[1][1] = function()
+    CURSOR_LEFT(cursor_pos - 1)
+    cursor_pos = 1
+end
+
+--^E
+KEY[1][5] = function()
+    CURSOR_RIGHT(#command + 1 - cursor_pos)
+    cursor_pos = #command + 1
+end
 
 --up arrow
 KEY[3][0x41] = function()
@@ -212,7 +223,10 @@ function run_command()
     local result
     if #string.trim(command) > 0 then
         result = SEND_DATA(command)
-        if result and not(result == 'nil') then
+        if result == 'nil' then
+            result = nil
+        end
+        if result then
             PRINT(result)
         end
         table.insert(history, command)
