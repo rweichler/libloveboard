@@ -26,20 +26,39 @@ const char *lua_preload =
 
 
 static lua_State *THE_STATE;
-const char *run_lua_code(const char *code)
+const char *run_lua_code(const char *code, bool *err)
 {
     lua_State *L = THE_STATE;
     if(L == NULL) {
-        return "LoveBoard isn't running you fucking retard! Use the `relove` command to restart it.";
-    } else if(luaL_loadstring(L, code) != 0) {
-        return lua_tostring(L, -1);
-    } else {
-        lua_pcall(L, 0, 1, 0);
-        lua_getglobal(L, "tostring");
-        lua_pushvalue(L, -2);
-        lua_pcall(L, 1, 1, 0);
+        return "LoveBoard isn't running you retard\nUse the `relove` command to restart it.";
+    }
+
+    bool success;
+    success = luaL_loadstring(L, code) == 0;
+
+    if(!success) {
+        if(err != NULL) {
+            *err = !success;
+        }
         return lua_tostring(L, -1);
     }
+
+    success = lua_pcall(L, 0, 1, 0) == 0;
+
+
+    if(err != NULL) {
+        *err = !success;
+    }
+
+    if(lua_isnil(L, -1)) {
+        return NULL;
+    }
+
+    lua_getglobal(L, "tostring");
+    lua_pushvalue(L, -2);
+
+    lua_pcall(L, 1, 1, 0);
+    return lua_tostring(L, -1);
 }
 
 void loveboard_run();
@@ -57,8 +76,18 @@ static CFDataRef Callback(CFMessagePortRef port,
         });
         return NULL;
     }else {
-        const char *result = run_lua_code(yee);
-        return CFDataCreate(NULL, (const unsigned char *)result, strlen(result) + 1);
+        bool err;
+        const char *result = run_lua_code(yee, &err);
+        if(result == NULL) {
+            return NULL;
+        }
+        char bytes[strlen("ERROR: ") + strlen(result) + 1];
+        bytes[0] = 0;
+        if(err) {
+            strcat(bytes, "ERROR: ");
+        }
+        strcat(bytes, result);
+        return CFDataCreate(NULL, (const unsigned char *)bytes, strlen(bytes) + 1);
     }
 
 }

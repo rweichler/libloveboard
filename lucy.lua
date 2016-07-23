@@ -206,9 +206,8 @@ error = function(...)
 end
 
 if is_piping then -- just process the inputs, no pretty shell needed
-    for line in io.input():lines() do
-        print(SEND_DATA(line))
-    end
+    local code = io.input():read("*all")
+    print(SEND_DATA(code))
     return
 end
 
@@ -223,16 +222,27 @@ function run_command()
     local result
     if #string.trim(command) > 0 then
         result = SEND_DATA(command)
-        if result == 'nil' then
-            result = nil
-        end
         if result then
-            PRINT(result)
+            PRINT_RESULT(result)
+        else
+            result = nil
         end
         table.insert(history, command)
     end
     history_idx = nil
     PROMPT(result or false)
+end
+
+
+function PRINT_RESULT(result)
+    local comp = "ERROR: "
+    PRINT("\t")
+    if string.sub(result, 1, #comp) == comp then
+        RED_PRINT(result)
+    else
+        GREEN_PRINT(result)
+    end
+    PRINT("\n")
 end
 
 C.signal(SIGINT, function()
@@ -273,7 +283,13 @@ function BELL()
 end
 
 function GREEN_PRINT(str)
-    PRINT("\x1B[32m")
+    PRINT("\x1B[1;32m")
+    PRINT(str)
+    PRINT("\x1B[0m")
+end
+
+function RED_PRINT(str)
+    PRINT("\x1B[1;31m")
     PRINT(str)
     PRINT("\x1B[0m")
 end

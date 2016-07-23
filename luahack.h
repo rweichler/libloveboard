@@ -5,6 +5,31 @@
 #define LUA_GLOBALSINDEX        (-10002)
 #define lua_upvalueindex(i)     (LUA_GLOBALSINDEX-(i))
 
+/*
+** basic types
+*/
+#define LUA_TNONE               (-1)
+
+#define LUA_TNIL                0
+#define LUA_TBOOLEAN            1
+#define LUA_TLIGHTUSERDATA      2
+#define LUA_TNUMBER             3
+#define LUA_TSTRING             4
+#define LUA_TTABLE              5
+#define LUA_TFUNCTION           6
+#define LUA_TUSERDATA           7
+#define LUA_TTHREAD             8
+
+#define lua_isfunction(L,n)     (lua_type(L, (n)) == LUA_TFUNCTION)
+#define lua_istable(L,n)        (lua_type(L, (n)) == LUA_TTABLE)
+#define lua_islightuserdata(L,n)        (lua_type(L, (n)) == LUA_TLIGHTUSERDATA)
+#define lua_isnil(L,n)          (lua_type(L, (n)) == LUA_TNIL)
+#define lua_isboolean(L,n)      (lua_type(L, (n)) == LUA_TBOOLEAN)
+#define lua_isthread(L,n)       (lua_type(L, (n)) == LUA_TTHREAD)
+#define lua_isnone(L,n)         (lua_type(L, (n)) == LUA_TNONE)
+#define lua_isnoneornil(L, n)   (lua_type(L, (n)) <= 0)
+
+
 typedef void lua_State;
 typedef int (*lua_CFunction) (lua_State *L);
 void (*lua_getfield)(lua_State *, int, const char *);
@@ -35,6 +60,9 @@ float (*lua_tonumber)(lua_State *, int);
 int (*luaL_loadfile) (lua_State *, const char *);
 int (*lua_pcall) (lua_State *, int, int, int);
 int (*luaL_loadstring) (lua_State *, const char *);
+int             (*lua_type) (lua_State *L, int idx);
+
+size_t          (*lua_objlen) (lua_State *L, int idx);
 
 const char * (*lua_tolstring)(lua_State *, int, size_t *);
 #define lua_tostring(L,i)       lua_tolstring(L, (i), NULL)
@@ -88,4 +116,6 @@ static void load_liblove()
     SET(love_SDL_iPhoneSetEventPump);
     SET(lua_tolstring);
     SET(lua_pushvalue);
+    SET(lua_objlen);
+    SET(lua_type);
 }
