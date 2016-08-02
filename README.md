@@ -1,1 +1,3 @@
-[https://www.youtube.com/watch?v=ZSlsYgRMqKA](https://www.youtube.com/watch?v=ZSlsYgRMqKA)
+RIP
+
+love2d sucks
