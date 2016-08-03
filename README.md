@@ -1,3 +1,3 @@
 RIP
 
-love2d sucks
+love2d sucks for battery life
